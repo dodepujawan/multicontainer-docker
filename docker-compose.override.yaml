@@ -1,0 +1,7 @@
+services:
+  web:
+    ports:
+      - "8000:80"   # ⬅️ hanya aktif di local
+  nginxproxymanager:
+    ports:
+      - "8080:81"   # GUI NPM local (akses http://127.0.0.1:8080)
