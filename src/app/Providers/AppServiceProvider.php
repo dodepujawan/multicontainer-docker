@@ -1,9 +1,10 @@
 <?php
 
 namespace App\Providers;
-use App\Http\Middleware\TrustProxies;
+// use App\Http\Middleware\TrustProxies;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Route;
+// use Illuminate\Support\Facades\Route;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,11 +21,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Tambahkan TrustProxies untuk semua request
-    $this->app['router']->aliasMiddleware('trustproxies', TrustProxies::class);
-
-    Route::middleware(['trustproxies'])->group(function () {
-        // Semua route Laravel kamu tetap bisa diakses
-    });
+       // Force HTTPS in non-local environments
+        if($this->app->environment('production', 'staging')) {
+            URL::forceScheme('https');
+        }
     }
 }
