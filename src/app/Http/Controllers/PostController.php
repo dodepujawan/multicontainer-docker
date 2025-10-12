@@ -18,17 +18,37 @@ class PostController extends Controller
         return view('posts.create');
     }
 
-    public function store(Request $request)
-    {
+    public function store(Request $request){
         $request->validate([
             'title' => 'required',
             'content' => 'nullable',
         ]);
 
-        Post::create($request->only('title', 'content'));
+        $post = Post::create($request->only('title', 'content'));
 
-        return redirect()->route('posts.index')->with('success', 'Post created.');
+        // Return JSON response untuk print
+        return response()->json([
+            'success' => true,
+            'message' => 'Post created successfully',
+            'print_data' => $this->generatePrintData($post)
+        ]);
     }
+
+    private function generatePrintData($post){
+        $tanggal = now()->format('d/m/Y H:i:s');
+
+        $printContent = "";
+        $printContent .= "TEST CETAK\n";
+        $printContent .= $tanggal . "\n";
+        $printContent .= "------------------------\n";
+        $printContent .= $post->title . "\n";
+        $printContent .= "------------------------\n";
+        $printContent .= $post->content . "\n";
+        $printContent .= "------------------------\n";
+
+        return $printContent;
+    }
+
 
     public function edit(Post $post)
     {

@@ -1,4 +1,6 @@
 FROM php:8.3-fpm
+# alternative fix version saat di develop
+# FROM php:8.3.26-fpm
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
