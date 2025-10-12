@@ -102,6 +102,7 @@
 
 <!-- JSPrintManager -->
 <script src="https://cdn.jsdelivr.net/npm/jsprintmanager@8/binaries/0.0.0.8/JSPM.js"></script>
+<script src="https://unpkg.com/jsprintmanager/JSPrintManager.js"></script>
 
 <script>
 $(document).ready(function() {
