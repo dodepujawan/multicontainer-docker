@@ -25,3 +25,5 @@ Thumbs.db
 *~
 *.swp
 *.swo
+
+npm_data/database.sqlite
