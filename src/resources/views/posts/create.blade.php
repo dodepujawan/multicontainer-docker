@@ -101,33 +101,46 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- JSPrintManager -->
-<script src="https://cdn.jsdelivr.net/npm/jsprintmanager@8/binaries/0.0.0.8/JSPM.js"></script>
+{{-- <script src="https://cdn.jsdelivr.net/npm/jsprintmanager@8/binaries/0.0.0.8/JSPM.js"></script> --}}
 <script src="https://unpkg.com/jsprintmanager/JSPrintManager.js"></script>
 
 <script>
 $(document).ready(function() {
-    // Pastikan JSPM terdefinisi
+    // Cek apakah JSPM sudah tersedia
     if (typeof JSPM === 'undefined') {
-        alert("⚠️ JSPrintManager belum dimuat. Pastikan Anda menginstal aplikasi JSPrintManager di komputer ini.");
+        alert("⚠️ JSPrintManager belum dimuat. Pastikan aplikasi JSPrintManager terinstall dan berjalan di komputer ini.");
         return;
     }
 
-    // Start JSPrintManager
-    JSPM.JSPrintManager.start()
-        .then(() => console.log("✅ JSPrintManager Ready!"))
-        .catch(e => {
-            console.error("JSPrintManager Error:", e);
-            alert("❌ JSPrintManager belum siap. Pastikan aplikasi JSPrintManager sedang berjalan.");
-        });
+    // Set agar JSPrintManager otomatis reconnect
+    JSPM.JSPrintManager.auto_reconnect = true;
 
-    // Character counter
-    $('#content').on('input', function() {
-        $('#char-count').text($(this).val().length + ' characters');
+    // Start JSPrintManager (pakai ws:// karena masih local)
+    JSPM.JSPrintManager.start({
+        websocket: { protocol: "ws", hostname: "localhost", port: 23443 }
+    })
+    .then(() => {
+        console.log("✅ JSPrintManager started. Version:", JSPM.JSPrintManager.version);
+        loadPrinters(); // opsional, untuk cek daftar printer
+    })
+    .catch(err => {
+        console.error("❌ Tidak bisa konek ke JSPrintManager:", err);
+        alert("❌ JSPrintManager tidak terhubung.\nPastikan aplikasinya sedang berjalan di tray Windows.");
     });
 
-    // Form Submit AJAX
+    // Fungsi untuk menampilkan daftar printer (opsional)
+    async function loadPrinters() {
+        try {
+            const printers = await JSPM.JSPrintManager.getPrinters();
+            console.log("🖨️ Printer yang terdeteksi:", printers);
+        } catch (e) {
+            console.error("Gagal ambil daftar printer:", e);
+        }
+    }
+
+    // ===== Form Submit AJAX =====
     $('#postForm').on('submit', function(e) {
-        e.preventDefault(); // <== ini penting, biar form tidak reload!
+        e.preventDefault();
 
         let btn = $('#submitBtn');
         let btnText = $('#submitText');
@@ -150,33 +163,66 @@ $(document).ready(function() {
                         window.location.href = '{{ route('posts.index') }}';
                     }, 2000);
                 } else {
-                    alert('Failed to create post');
+                    alert('Gagal membuat post.');
                 }
             },
             error: function(xhr) {
                 console.log(xhr.responseText);
-                alert('Error creating post');
+                alert('❌ Error saat membuat post');
                 btn.prop('disabled', false);
                 btnText.text('Create & Print');
             }
         });
     });
 
-    // Fungsi print
-    function printStruk(printData) {
+    // ===== Fungsi cetak struk =====
+    async function printStruk(printData) {
         try {
-            let escpos = '\x1B\x40' + printData + '\n\n\n\x1B\x69';
-            let printer = new JSPM.ClientPrint();
-            printer.printerCommands = escpos;
+            // Pastikan koneksi JSPrintManager terbuka
+            if (JSPM.JSPrintManager.websocket_status !== JSPM.WSStatus.Open) {
+                console.warn("⚠️ WebSocket belum terbuka, mencoba start ulang...");
+                await JSPM.JSPrintManager.start();
+            }
 
-            printer.sendToClient()
-                .then(() => alert("Post created & printed successfully!"))
-                .catch(e => alert("Print failed: " + e.message));
+            // Format ESC/POS dasar
+            const escpos =
+                '\x1B\x40' +                   // Initialize printer
+                '\x1B\x61\x01' +               // Center
+                'TOKO CONTOH\n' +
+                '\x1B\x61\x00' +               // Left align
+                '------------------------\n' +
+                printData + '\n' +
+                '------------------------\n' +
+                '\n\n\n' +
+                '\x1D\x56\x00';                // Full cut
+
+            // Buat file teks untuk dikirim ke printer
+            const file = new JSPM.PrintFileTXT(
+                escpos,                        // Data ESC/POS
+                JSPM.FileSourceType.Text,       // Tipe file
+                "struk.txt",                    // Nama file
+                1                               // Jumlah copy
+            );
+
+            // Buat job print baru (default printer)
+            const pj = new JSPM.PrintJob();
+            pj.files.push(file);
+
+            // Kirim ke printer
+            await pj.sendToClient();
+            alert("✅ Struk berhasil dikirim ke printer!");
+
         } catch (err) {
-            console.error(err);
-            alert("Print error: " + err.message);
+            console.error("Print error:", err);
+            alert("❌ Gagal mencetak: " + (err.message || err));
+        } finally {
+            $('#submitBtn').prop('disabled', false);
+            $('#submitText').text('Create & Print');
         }
     }
+
+    // Biar bisa dipanggil dari luar
+    window.printStruk = printStruk;
 });
 </script>
 </body>

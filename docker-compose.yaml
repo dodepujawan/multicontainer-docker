@@ -9,6 +9,8 @@ services:
       - laravel
     depends_on:
       - db
+    restart: always                       # ✅ di VPS: auto hidup lagi kalau mati
+
 
   db:
     image: mysql:8.0.36
@@ -24,6 +26,7 @@ services:
       - dbdata:/var/lib/mysql
     networks:
       - laravel
+    restart: always                       # ✅ biar database gak gampang down
 
   web:
     image: nginx:1.27-alpine
@@ -38,6 +41,7 @@ services:
       - app
     networks:
       - laravel
+    restart: always                       # ✅ biar Nginx auto hidup di VPS
 
   # 🆕 Tambahkan Nginx Proxy Manager (NPM)
   nginxproxymanager:
