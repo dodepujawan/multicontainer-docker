@@ -8,3 +8,10 @@ Route::get('/', function () {
 });
 
 Route::resource('posts', PostController::class);
+
+Route::get('/print', [PostController::class, 'print'])->name('print');
+
+// routes/web.php
+Route::get('/print-raw', [PostController::class, 'getRawPrint'])->name('print.raw');
+
+

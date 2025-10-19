@@ -72,4 +72,22 @@ class PostController extends Controller
         $post->delete();
         return redirect()->route('posts.index')->with('success', 'Post deleted.');
     }
+
+    public function print()
+    {
+        return view('print.print');
+    }
+
+    public function getRawPrint(){
+        // Contoh data ESC/POS sederhana (tes)
+        $esc = "\x1B@\n";
+        $esc .= "TEST PRINT\n";
+        $esc .= "------------\n";
+        $esc .= "Hello JSPrintManager!\n";
+        $esc .= "\n\n\n";
+        // Konversi ke binary response
+        return response($esc)
+            ->header('Content-Type', 'application/octet-stream');
+    }
+
 }
